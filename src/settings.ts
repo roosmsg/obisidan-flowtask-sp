@@ -27,7 +27,7 @@ export class FlowTaskSettingTab extends PluginSettingTab {
         heading: "Task import",
         items: [
           { name: "Default project", control: { type: "text", key: "defaultProjectName", defaultValue: "" } },
-          { name: "Import tag", desc: "Only checkboxes with this tag are sent to SP. Default: #sp.", control: { type: "text", key: "importTag", defaultValue: "sp", placeholder: "#sp" } },
+          { name: "Import tag", desc: "Only checkboxes with this tag are sent to SP. Leave empty to import every checkbox. Default: #sp.", control: { type: "text", key: "importTag", defaultValue: "sp", placeholder: "#sp" } },
         ],
       },
       {
@@ -55,7 +55,7 @@ export class FlowTaskSettingTab extends PluginSettingTab {
   override async setControlValue(key: string, value: unknown): Promise<void> {
     const settings = this.plugin.settings as unknown as Record<string, unknown>;
     if (!(key in settings)) return;
-    if (key === "importTag") settings[key] = String(value).replace(/^#/, "").trim() || "sp";
+    if (key === "importTag") settings[key] = String(value).replace(/^#/, "").trim();
     else if (key === "pollingSeconds") settings[key] = Number(value);
     else settings[key] = value;
     await this.plugin.saveSettings();

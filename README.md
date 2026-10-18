@@ -121,6 +121,14 @@ A normal checkbox without the import tag is left untouched:
 
 The import tag is configurable under **Settings > FlowTask For Super Productivity > Import tag**. The value may be entered as `sp` or `#sp`; FlowTask normalizes both forms.
 
+Leave the import tag empty to import every checkbox without a tag:
+
+```markdown
+- [ ] Update website
+```
+
+With an empty import tag, every checkbox in a note is sent to Super Productivity as soon as the note is opened or edited. Titles shorter than three characters are still skipped while a line is being typed.
+
 ### Supported note metadata
 
 ```markdown
@@ -382,7 +390,7 @@ Optional existing Super Productivity project name used when a newly created task
 
 ### Import tag
 
-The routing tag used by the checkbox watcher. Default: `#sp`.
+The routing tag used by the checkbox watcher. Default: `#sp`. Leave it empty to import every checkbox.
 
 ## Troubleshooting
 
@@ -396,7 +404,7 @@ The routing tag used by the checkbox watcher. Default: `#sp`.
 
 ### Tasks are not imported from a note
 
-1. Confirm that the checkbox contains the configured import tag, normally `#sp`.
+1. Confirm that the checkbox contains the configured import tag, normally `#sp`, or that the import tag is empty.
 2. Confirm that the line starts with an Obsidian checkbox such as `- [ ]`.
 3. Use **FlowTask: Sync current line** to process the current line immediately.
 4. Check the note source for the hidden `%%sp-id:...%%` marker.

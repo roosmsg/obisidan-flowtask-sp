@@ -4,7 +4,7 @@ All notable changes to FlowTask For Super Productivity are documented here.
 
 ## Unreleased
 
-- Future changes.
+- Added import of every checkbox when the import tag setting is empty.
 
 ## 0.1.8
 

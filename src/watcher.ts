@@ -13,7 +13,8 @@ export class CheckboxWatcher {
 
   constructor(private readonly app: App, private readonly transport: TransportManager, private importTag = "sp") {}
 
-  configure(importTag: string): void { this.importTag = importTag.replace(/^#/, "").trim() || "sp"; }
+  // An empty import tag means that every checkbox is imported.
+  configure(importTag: string): void { this.importTag = importTag.replace(/^#/, "").trim(); }
 
   register(vault: Vault, registerEvent: (event: EventRef) => void): void {
     registerEvent(vault.on("modify", (file) => {
@@ -66,7 +67,7 @@ export class CheckboxWatcher {
       return marker;
     }
 
-    if (!parentId && !hasImportTag(match.parsed.tagNames, this.importTag)) return undefined;
+    if (!parentId && !importTagAccepts(match.parsed.tagNames, this.importTag)) return undefined;
     if (!allowShortTitle && match.parsed.title.trim().length < 3) return undefined;
 
     const task = await this.transport.createTask({
@@ -137,6 +138,11 @@ export function findTaskIdInLine(line: string): string | undefined { return line
 export function hasImportTag(tags: string[], importTag: string): boolean {
   const normalized = importTag.replace(/^#/, "").trim().toLocaleLowerCase();
   return tags.some((tag) => tag.toLocaleLowerCase() === normalized);
+}
+
+export function importTagAccepts(tags: string[], importTag: string): boolean {
+  const normalized = importTag.trim().replace(/^#/, "").trim();
+  return normalized === "" || hasImportTag(tags, normalized);
 }
 
 export function resolveRemoteDone(parentDone: boolean, directChildState: boolean | undefined): boolean | undefined {
