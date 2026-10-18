@@ -34,23 +34,42 @@ export class CheckboxWatcher {
     await this.processLine(file, editor.getLine(editor.getCursor().line), editor.getCursor().line, undefined, true);
   }
 
-  private schedule(file: TFile): void {
+  private schedule(file: TFile, delay = 1500): void {
     const previous = this.timers.get(file.path);
     if (previous) window.clearTimeout(previous);
-    this.timers.set(file.path, window.setTimeout(() => { void this.scanFile(file); }, 1500));
+    this.timers.set(file.path, window.setTimeout(() => { void this.scanFile(file); }, delay));
+  }
+
+  // The line that holds the cursor is still being written, so it is not
+  // imported until the cursor leaves it. "Sync current line" bypasses this.
+  private editingLine(file: TFile): number | undefined {
+    const active = this.app.workspace.activeEditor;
+    if (!active?.editor || active.file?.path !== file.path) return undefined;
+    return active.editor.getCursor().line;
   }
 
   private async scanFile(file: TFile): Promise<void> {
     const content = await this.app.vault.read(file);
     const stack: Array<{ indent: number; id: string; rootId: string }> = [];
-    for (const [lineNumber, line] of content.split("\n").entries()) {
+    const lines = content.split("\n");
+    const editingLine = this.editingLine(file);
+    let waiting = false;
+    let skippedIndent: number | undefined;
+    for (const [lineNumber, line] of lines.entries()) {
       const match = parseCheckboxLine(line);
       if (!match) continue;
+      // Children of a skipped line wait as well; otherwise they would be
+      // created as top-level tasks instead of subtasks.
+      if (skippedIndent !== undefined && match.indent.length > skippedIndent) continue;
+      skippedIndent = undefined;
+      if (lineNumber === editingLine && !MARKER_RE.test(line)) { skippedIndent = match.indent.length; waiting = true; continue; }
       while (stack.length && stack[stack.length - 1].indent >= match.indent.length) stack.pop();
       const parent = stack[stack.length - 1];
       const taskId = await this.processLine(file, line, lineNumber, parent?.rootId);
       if (taskId) stack.push({ indent: match.indent.length, id: taskId, rootId: parent?.rootId ?? taskId });
     }
+    // Cursor movement fires no vault event, so poll until the line is free.
+    if (waiting) this.schedule(file, 3000);
   }
 
   private async processLine(file: TFile, line: string, lineNumber: number, parentId?: string, allowShortTitle = false): Promise<string | undefined> {

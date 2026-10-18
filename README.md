@@ -113,6 +113,8 @@ The default import tag is `#sp`. A checkbox must contain the configured import t
 - [ ] Review the release notes #sp
 ```
 
+A checkbox is imported once the cursor leaves its line, so a task is not created while its title is still being typed. Use **FlowTask: Sync current line** to import the current line immediately.
+
 A normal checkbox without the import tag is left untouched:
 
 ```markdown
@@ -127,7 +129,7 @@ Leave the import tag empty to import every checkbox without a tag:
 - [ ] Update website
 ```
 
-With an empty import tag, every checkbox in a note is sent to Super Productivity as soon as the note is opened or edited. Titles shorter than three characters are still skipped while a line is being typed.
+With an empty import tag, every checkbox in a note is sent to Super Productivity as soon as the note is opened or edited, except the line that holds the cursor. Titles shorter than three characters are skipped.
 
 ### Supported note metadata
 
