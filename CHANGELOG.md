@@ -4,7 +4,7 @@ All notable changes to FlowTask For Super Productivity are documented here.
 
 ## Unreleased
 
-- Future changes.
+- Fixed the `%%sp-id%%` marker landing on the wrong line, such as an empty checkbox, when the note changed while the task was being created.
 
 ## 0.1.8
 

@@ -1,5 +1,6 @@
 import { Notice, TFile, type App, type EventRef, type Vault } from "obsidian";
 import { parseCheckboxLine } from "./domain/parser";
+import { locateLine } from "./domain/lines";
 import type { FlowTask } from "./types";
 import { TransportManager } from "./transport/manager";
 
@@ -81,14 +82,25 @@ export class CheckboxWatcher {
     if (!task) return undefined;
 
     const markerText = ` %%sp-id:${task.id}%%`;
+    let placed = false;
     this.processing.add(file.path);
     try {
       await this.app.vault.process(file, (content) => {
         const lines = content.split("\n");
-        if (lineNumber >= lines.length || lines[lineNumber].match(MARKER_RE)) return content;
-        lines[lineNumber] = `${lines[lineNumber]}${markerText}`;
+        // The note may have changed while the task was created, so the
+        // marker follows the original line instead of its old index.
+        const target = locateLine(lines, lineNumber, line);
+        if (target === undefined || MARKER_RE.test(lines[target])) return content;
+        lines[target] = `${lines[target]}${markerText}`;
+        placed = true;
         return lines.join("\n");
       });
+      if (!placed) {
+        // The line is gone; remove the task again instead of leaving an
+        // unlinked copy that the next scan would duplicate.
+        await this.transport.deleteTask(task.id);
+        return undefined;
+      }
       if (match.checked) await this.transport.updateTask(task.id, { status: "done" });
       new Notice(`FlowTask: ${match.checked ? "task completed" : "task synced"}.`);
     } finally {
