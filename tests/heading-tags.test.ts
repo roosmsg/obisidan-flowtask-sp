@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cleanHeadingText, headingTagCandidates, nearestHeadings, resolveHeadingTag } from "../src/domain/heading";
+import { cleanHeadingText, fallbackHeadingTag, headingTagCandidates, nearestHeadings, resolveHeadingTag } from "../src/domain/heading";
 
 const tags = [
   { id: "t1", name: "Garden" },
@@ -51,6 +51,13 @@ describe("heading tag resolution", () => {
   it("falls back to the shortened heading", () => {
     expect(resolveHeadingTag("Garden: spring", tags)?.id).toBe("t1");
     expect(resolveHeadingTag("Admin - 2026", tags)?.id).toBe("t2");
+  });
+
+  it("falls back to a hashtag-safe heading when no tag exists", () => {
+    expect(fallbackHeadingTag("Kitchen")).toBe("Kitchen");
+    expect(fallbackHeadingTag("Garden: spring tasks")).toBe("Garden");
+    expect(fallbackHeadingTag("**Release notes**")).toBe("Release-notes");
+    expect(fallbackHeadingTag("   ")).toBeUndefined();
   });
 
   it("returns nothing when no tag exists", () => {

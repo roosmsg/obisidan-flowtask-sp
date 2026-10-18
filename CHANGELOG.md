@@ -4,7 +4,7 @@ All notable changes to FlowTask For Super Productivity are documented here.
 
 ## Unreleased
 
-- Added an optional setting that tags imported tasks with the nearest heading above the checkbox.
+- Added an optional setting that tags imported tasks with the nearest heading above the checkbox. Headings without a matching tag are appended to the title as `#tag`.
 
 ## 0.1.8
 

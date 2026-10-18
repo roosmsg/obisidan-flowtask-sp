@@ -135,7 +135,8 @@ Enable **Settings > FlowTask For Super Productivity > Tag tasks with nearest hea
 Both tasks receive the Super Productivity tag `Garden`. The rules are:
 
 - The closest heading above the checkbox is used, at any level. Formatting, wikilinks and HTML are stripped.
-- The heading must match an existing Super Productivity tag, case-insensitively. When the full heading does not match, the part before the first `:`, ` - `, `|` or `(` is tried, so `## Garden: spring` also matches the tag `Garden`. If nothing matches, no tag is added.
+- The heading is matched against existing Super Productivity tags, case-insensitively. When the full heading does not match, the part before the first `:`, ` - `, `|` or `(` is tried, so `## Garden: spring` also matches the tag `Garden`.
+- When no tag matches, the heading is appended to the task title as `#Garden`, the same way an unknown inline tag is handled. Current Super Productivity versions parse the hashtag a moment after the task arrives, create the tag and attach it. Spaces become hyphens: `## Release notes` gives `#Release-notes`.
 - Checkboxes above the first heading receive no heading tag.
 - Inline `#tags` on the line are kept and combined with the heading tag.
 - The tag is set when the task is imported. Moving the checkbox to another section later does not change it.
@@ -406,7 +407,7 @@ The routing tag used by the checkbox watcher. Default: `#sp`.
 
 ### Tag tasks with nearest heading
 
-Adds the closest heading above a checkbox as a tag when the task is imported. Only existing Super Productivity tags are matched. Default: off.
+Adds the closest heading above a checkbox as a tag when the task is imported. Existing Super Productivity tags are matched; otherwise the heading is appended to the title as `#tag`. Default: off.
 
 ## Troubleshooting
 

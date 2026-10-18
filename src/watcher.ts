@@ -1,6 +1,6 @@
 import { Notice, TFile, type App, type EventRef, type Vault } from "obsidian";
 import { parseCheckboxLine } from "./domain/parser";
-import { nearestHeadings, resolveHeadingTag } from "./domain/heading";
+import { fallbackHeadingTag, nearestHeadings, resolveHeadingTag } from "./domain/heading";
 import type { BridgeSettings, FlowTask } from "./types";
 import { TransportManager } from "./transport/manager";
 
@@ -86,10 +86,11 @@ export class CheckboxWatcher {
 
     const tagNames = match.parsed.tagNames.filter((tag) => tag.toLocaleLowerCase() !== this.importTag.toLocaleLowerCase());
     // Subtasks inherit from their parent, so the heading tag is only resolved
-    // for top-level tasks. The tag is fixed at import time.
+    // for top-level tasks. The tag is fixed at import time. A heading without
+    // a matching tag is passed on by name, which ends up as #tag in the title.
     if (this.tagWithHeading && heading && !parentId) {
-      const headingTag = resolveHeadingTag(heading, await this.transport.listTags());
-      if (headingTag && !tagNames.some((tag) => tag.toLocaleLowerCase() === headingTag.name.toLocaleLowerCase())) tagNames.push(headingTag.name);
+      const headingTag = resolveHeadingTag(heading, await this.transport.listTags())?.name ?? fallbackHeadingTag(heading);
+      if (headingTag && !tagNames.some((tag) => tag.toLocaleLowerCase() === headingTag.toLocaleLowerCase())) tagNames.push(headingTag);
     }
 
     const task = await this.transport.createTask({

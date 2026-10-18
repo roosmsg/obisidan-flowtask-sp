@@ -57,7 +57,16 @@ export function headingTagCandidates(heading: string): string[] {
   return short && short !== full ? [full, short] : [full];
 }
 
-// Only existing Super Productivity tags are used, matched case-insensitively.
+// Tag name for a heading that matches no existing tag. It is appended to the
+// title as #tag like an unknown inline tag; spaces become hyphens because a
+// hashtag in a title ends at the first space.
+export function fallbackHeadingTag(heading: string): string | undefined {
+  const candidates = headingTagCandidates(heading);
+  const short = candidates[candidates.length - 1];
+  return short ? short.replace(/\s+/g, "-") : undefined;
+}
+
+// Existing Super Productivity tags are matched case-insensitively.
 export function resolveHeadingTag(heading: string | undefined, tags: TagRef[]): TagRef | undefined {
   if (!heading) return undefined;
   for (const candidate of headingTagCandidates(heading)) {
