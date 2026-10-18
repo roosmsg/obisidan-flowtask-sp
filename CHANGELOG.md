@@ -5,6 +5,7 @@ All notable changes to FlowTask For Super Productivity are documented here.
 ## Unreleased
 
 - Added an optional setting that tags imported tasks with the nearest heading above the checkbox. Headings without a matching tag are appended to the title as `#tag`.
+- Shortened long heading tags to at most 30 characters: cut at a separator and then to whole words, keeping times such as `10:30` and ranges such as `Week 3-4` intact.
 
 ## 0.1.8
 

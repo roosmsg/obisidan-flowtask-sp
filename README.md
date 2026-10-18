@@ -135,7 +135,7 @@ Enable **Settings > FlowTask For Super Productivity > Tag tasks with nearest hea
 Both tasks receive the Super Productivity tag `Garden`. The rules are:
 
 - The closest heading above the checkbox is used, at any level. Formatting, wikilinks and HTML are stripped.
-- The heading is matched against existing Super Productivity tags, case-insensitively. When the full heading does not match, the part before the first `:`, ` - `, `|` or `(` is tried, so `## Garden: spring` also matches the tag `Garden`.
+- The heading is matched against existing Super Productivity tags, case-insensitively. When the full heading does not match, a shortened form is tried: the part before the first `: `, ` - `, ` – `, `|` or `(`, cut to whole words within 30 characters. `## Garden: spring` matches the tag `Garden`; `## Week 3-4 – Reading (part 1)` gives `Week 3-4`; `10:30` and `Week 3-4` stay intact.
 - When no tag matches, the heading is appended to the task title as `#Garden`, the same way an unknown inline tag is handled. Current Super Productivity versions parse the hashtag a moment after the task arrives, create the tag and attach it. Spaces become hyphens: `## Release notes` gives `#Release-notes`.
 - Checkboxes above the first heading receive no heading tag.
 - Inline `#tags` on the line are kept and combined with the heading tag.

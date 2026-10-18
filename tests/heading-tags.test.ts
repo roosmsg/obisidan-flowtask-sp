@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cleanHeadingText, fallbackHeadingTag, headingTagCandidates, nearestHeadings, resolveHeadingTag } from "../src/domain/heading";
+import { cleanHeadingText, fallbackHeadingTag, headingTagCandidates, nearestHeadings, resolveHeadingTag, shortenHeading } from "../src/domain/heading";
 
 const tags = [
   { id: "t1", name: "Garden" },
@@ -40,6 +40,20 @@ describe("heading cleanup", () => {
     expect(headingTagCandidates("Garden")).toEqual(["Garden"]);
     expect(headingTagCandidates("")).toEqual([]);
   });
+
+  it("keeps times and ranges intact when shortening", () => {
+    expect(shortenHeading("Week 3-4 – Reading (part 1)")).toBe("Week 3-4");
+    expect(shortenHeading("10:30 standup")).toBe("10:30 standup");
+    expect(shortenHeading("Week 5: Preparing the interview guide")).toBe("Week 5");
+    expect(shortenHeading(": leading separator")).toBe(": leading separator");
+  });
+
+  it("cuts long headings to whole words within the maximum length", () => {
+    expect(shortenHeading("Preparing the interview guide for the second round", 30)).toBe("Preparing the interview guide");
+    expect(shortenHeading("Preparing the interview guide, second round", 32)).toBe("Preparing the interview guide");
+    expect(shortenHeading("Supercalifragilisticexpialidocious", 10)).toBe("Supercalif");
+    expect(headingTagCandidates("Preparing the interview guide for the second round", 20)).toEqual(["Preparing the interview guide for the second round", "Preparing the"]);
+  });
 });
 
 describe("heading tag resolution", () => {
@@ -57,6 +71,7 @@ describe("heading tag resolution", () => {
     expect(fallbackHeadingTag("Kitchen")).toBe("Kitchen");
     expect(fallbackHeadingTag("Garden: spring tasks")).toBe("Garden");
     expect(fallbackHeadingTag("**Release notes**")).toBe("Release-notes");
+    expect(fallbackHeadingTag("Preparing the interview guide for the second round", 20)).toBe("Preparing-the");
     expect(fallbackHeadingTag("   ")).toBeUndefined();
   });
 
