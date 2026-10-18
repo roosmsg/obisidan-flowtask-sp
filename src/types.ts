@@ -67,6 +67,7 @@ export interface BridgeSettings {
   defaultTagName: string;
   projectOrder: string[];
   importTag: string;
+  tagWithHeading: boolean;
   useProjectStyles: boolean;
 }
 
@@ -80,6 +81,7 @@ export const DEFAULT_SETTINGS: BridgeSettings = {
   defaultTagName: "",
   projectOrder: [],
   importTag: "sp",
+  tagWithHeading: false,
   useProjectStyles: true,
 };
 

@@ -16,7 +16,7 @@ export default class FlowTaskPlugin extends Plugin {
   override async onload(): Promise<void> {
     this.settings = { ...DEFAULT_SETTINGS, ...(await this.loadData() as Partial<BridgeSettings> | null) };
     this.transport = new TransportManager(this.app, this.settings);
-    this.watcher = new CheckboxWatcher(this.app, this.transport, this.settings.importTag);
+    this.watcher = new CheckboxWatcher(this.app, this.transport, this.settings);
     this.watcher.register(this.app.vault, (event) => this.registerEvent(event));
     this.registerView(FLOWTASK_VIEW_TYPE, (leaf) => new TaskView(
       leaf,
@@ -37,7 +37,7 @@ export default class FlowTaskPlugin extends Plugin {
 
   override onunload(): void {}
 
-  async saveSettings(): Promise<void> { await this.saveData(this.settings); this.transport.configure(); this.watcher?.configure(this.settings.importTag); void this.refreshPanel(); }
+  async saveSettings(): Promise<void> { await this.saveData(this.settings); this.transport.configure(); this.watcher?.configure(this.settings); void this.refreshPanel(); }
 
   restartPolling(): void {
     if (this.pollingId) window.clearInterval(this.pollingId);

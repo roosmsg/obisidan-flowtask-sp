@@ -121,6 +121,26 @@ A normal checkbox without the import tag is left untouched:
 
 The import tag is configurable under **Settings > FlowTask For Super Productivity > Import tag**. The value may be entered as `sp` or `#sp`; FlowTask normalizes both forms.
 
+### Tag tasks with the nearest heading
+
+Enable **Settings > FlowTask For Super Productivity > Tag tasks with nearest heading** to use the section a checkbox belongs to as a tag:
+
+```markdown
+## Garden
+
+- [ ] Prune the roses #sp
+- [ ] Order compost #sp
+```
+
+Both tasks receive the Super Productivity tag `Garden`. The rules are:
+
+- The closest heading above the checkbox is used, at any level. Formatting, wikilinks and HTML are stripped.
+- The heading must match an existing Super Productivity tag, case-insensitively. When the full heading does not match, the part before the first `:`, ` - `, `|` or `(` is tried, so `## Garden: spring` also matches the tag `Garden`. If nothing matches, no tag is added.
+- Checkboxes above the first heading receive no heading tag.
+- Inline `#tags` on the line are kept and combined with the heading tag.
+- The tag is set when the task is imported. Moving the checkbox to another section later does not change it.
+- Subtasks inherit from their parent and receive no heading tag of their own.
+
 ### Supported note metadata
 
 ```markdown
@@ -383,6 +403,10 @@ Optional existing Super Productivity project name used when a newly created task
 ### Import tag
 
 The routing tag used by the checkbox watcher. Default: `#sp`.
+
+### Tag tasks with nearest heading
+
+Adds the closest heading above a checkbox as a tag when the task is imported. Only existing Super Productivity tags are matched. Default: off.
 
 ## Troubleshooting
 

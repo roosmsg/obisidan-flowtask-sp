@@ -28,6 +28,7 @@ export class FlowTaskSettingTab extends PluginSettingTab {
         items: [
           { name: "Default project", control: { type: "text", key: "defaultProjectName", defaultValue: "" } },
           { name: "Import tag", desc: "Only checkboxes with this tag are sent to SP. Default: #sp.", control: { type: "text", key: "importTag", defaultValue: "sp", placeholder: "#sp" } },
+          { name: "Tag tasks with nearest heading", desc: "Add the closest heading above a checkbox as a tag when the task is imported. Only existing Super Productivity tags are used.", control: { type: "toggle", key: "tagWithHeading", defaultValue: false } },
         ],
       },
       {

@@ -4,7 +4,7 @@ All notable changes to FlowTask For Super Productivity are documented here.
 
 ## Unreleased
 
-- Future changes.
+- Added an optional setting that tags imported tasks with the nearest heading above the checkbox.
 
 ## 0.1.8
 

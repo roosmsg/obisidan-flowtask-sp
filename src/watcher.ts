@@ -1,19 +1,30 @@
 import { Notice, TFile, type App, type EventRef, type Vault } from "obsidian";
 import { parseCheckboxLine } from "./domain/parser";
-import type { FlowTask } from "./types";
+import { nearestHeadings, resolveHeadingTag } from "./domain/heading";
+import type { BridgeSettings, FlowTask } from "./types";
 import { TransportManager } from "./transport/manager";
 
 const MARKER_RE = /(?:<!--\s*sp-id:|%%\s*sp-id:)([\w-]+)(?:\s*-->|%%)/i;
 const LEGACY_MARKER_RE = /<!--\s*sp-id:([\w-]+)\s*-->/i;
+
+type WatcherOptions = Pick<BridgeSettings, "importTag" | "tagWithHeading">;
 
 export class CheckboxWatcher {
   private readonly timers = new Map<string, number>();
   private readonly processing = new Set<string>();
   private readonly syncedStates = new Map<string, boolean>();
 
-  constructor(private readonly app: App, private readonly transport: TransportManager, private importTag = "sp") {}
+  private importTag = "sp";
+  private tagWithHeading = false;
 
-  configure(importTag: string): void { this.importTag = importTag.replace(/^#/, "").trim() || "sp"; }
+  constructor(private readonly app: App, private readonly transport: TransportManager, options?: WatcherOptions) {
+    if (options) this.configure(options);
+  }
+
+  configure(options: WatcherOptions): void {
+    this.importTag = options.importTag.replace(/^#/, "").trim() || "sp";
+    this.tagWithHeading = options.tagWithHeading;
+  }
 
   register(vault: Vault, registerEvent: (event: EventRef) => void): void {
     registerEvent(vault.on("modify", (file) => {
@@ -30,7 +41,9 @@ export class CheckboxWatcher {
     const editor = this.app.workspace.activeEditor?.editor;
     const file = this.app.workspace.getActiveFile();
     if (!editor || !file) { new Notice("Open a note to sync the current line."); return; }
-    await this.processLine(file, editor.getLine(editor.getCursor().line), editor.getCursor().line, undefined, true);
+    const lineNumber = editor.getCursor().line;
+    const heading = nearestHeadings(editor.getValue().split("\n"))[lineNumber];
+    await this.processLine(file, editor.getLine(lineNumber), lineNumber, undefined, true, heading);
   }
 
   private schedule(file: TFile): void {
@@ -42,17 +55,19 @@ export class CheckboxWatcher {
   private async scanFile(file: TFile): Promise<void> {
     const content = await this.app.vault.read(file);
     const stack: Array<{ indent: number; id: string; rootId: string }> = [];
-    for (const [lineNumber, line] of content.split("\n").entries()) {
+    const lines = content.split("\n");
+    const headings = nearestHeadings(lines);
+    for (const [lineNumber, line] of lines.entries()) {
       const match = parseCheckboxLine(line);
       if (!match) continue;
       while (stack.length && stack[stack.length - 1].indent >= match.indent.length) stack.pop();
       const parent = stack[stack.length - 1];
-      const taskId = await this.processLine(file, line, lineNumber, parent?.rootId);
+      const taskId = await this.processLine(file, line, lineNumber, parent?.rootId, false, headings[lineNumber]);
       if (taskId) stack.push({ indent: match.indent.length, id: taskId, rootId: parent?.rootId ?? taskId });
     }
   }
 
-  private async processLine(file: TFile, line: string, lineNumber: number, parentId?: string, allowShortTitle = false): Promise<string | undefined> {
+  private async processLine(file: TFile, line: string, lineNumber: number, parentId?: string, allowShortTitle = false, heading?: string): Promise<string | undefined> {
     const match = parseCheckboxLine(line);
     if (!match || !match.parsed.title) return undefined;
     const marker = line.match(MARKER_RE)?.[1];
@@ -69,11 +84,19 @@ export class CheckboxWatcher {
     if (!parentId && !hasImportTag(match.parsed.tagNames, this.importTag)) return undefined;
     if (!allowShortTitle && match.parsed.title.trim().length < 3) return undefined;
 
+    const tagNames = match.parsed.tagNames.filter((tag) => tag.toLocaleLowerCase() !== this.importTag.toLocaleLowerCase());
+    // Subtasks inherit from their parent, so the heading tag is only resolved
+    // for top-level tasks. The tag is fixed at import time.
+    if (this.tagWithHeading && heading && !parentId) {
+      const headingTag = resolveHeadingTag(heading, await this.transport.listTags());
+      if (headingTag && !tagNames.some((tag) => tag.toLocaleLowerCase() === headingTag.name.toLocaleLowerCase())) tagNames.push(headingTag.name);
+    }
+
     const task = await this.transport.createTask({
       title: match.parsed.title,
       parentId,
       projectName: match.parsed.projectName,
-      tagNames: match.parsed.tagNames.filter((tag) => tag.toLocaleLowerCase() !== this.importTag.toLocaleLowerCase()),
+      tagNames,
       dueDate: match.parsed.dueDate,
       estimateMinutes: match.parsed.estimateMinutes,
       notes: `Created from ${file.path}`,
