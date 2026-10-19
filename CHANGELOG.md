@@ -4,6 +4,8 @@ All notable changes to FlowTask For Super Productivity are documented here.
 
 ## Unreleased
 
+- Added import of every checkbox when the import tag setting is empty.
+- Delayed import of the line under the cursor until the cursor leaves it, so half-typed titles are no longer sent.
 - Fixed the `%%sp-id%%` marker landing on the wrong line, such as an empty checkbox, when the note changed while the task was being created.
 - Read and update open notes through the editor instead of the file on disk, so a title is no longer imported from a stale save and markers are no longer merged into the wrong line.
 

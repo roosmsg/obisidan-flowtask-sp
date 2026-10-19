@@ -14,7 +14,8 @@ export class CheckboxWatcher {
 
   constructor(private readonly app: App, private readonly transport: TransportManager, private importTag = "sp") {}
 
-  configure(importTag: string): void { this.importTag = importTag.replace(/^#/, "").trim() || "sp"; }
+  // An empty import tag means that every checkbox is imported.
+  configure(importTag: string): void { this.importTag = importTag.replace(/^#/, "").trim(); }
 
   register(vault: Vault, registerEvent: (event: EventRef) => void): void {
     registerEvent(vault.on("modify", (file) => {
@@ -34,10 +35,18 @@ export class CheckboxWatcher {
     await this.processLine(file, editor.getLine(editor.getCursor().line), editor.getCursor().line, undefined, true);
   }
 
-  private schedule(file: TFile): void {
+  private schedule(file: TFile, delay = 1500): void {
     const previous = this.timers.get(file.path);
     if (previous) window.clearTimeout(previous);
-    this.timers.set(file.path, window.setTimeout(() => { void this.scanFile(file); }, 1500));
+    this.timers.set(file.path, window.setTimeout(() => { void this.scanFile(file); }, delay));
+  }
+
+  // The line that holds the cursor is still being written, so it is not
+  // imported until the cursor leaves it. "Sync current line" bypasses this.
+  private editingLine(file: TFile): number | undefined {
+    const active = this.app.workspace.activeEditor;
+    if (!active?.editor || active.file?.path !== file.path) return undefined;
+    return active.editor.getCursor().line;
   }
 
   // A note that is open in an editor is read and changed through that editor.
@@ -59,14 +68,25 @@ export class CheckboxWatcher {
   private async scanFile(file: TFile): Promise<void> {
     const { content } = await this.readNote(file);
     const stack: Array<{ indent: number; id: string; rootId: string }> = [];
-    for (const [lineNumber, line] of content.split("\n").entries()) {
+    const lines = content.split("\n");
+    const editingLine = this.editingLine(file);
+    let waiting = false;
+    let skippedIndent: number | undefined;
+    for (const [lineNumber, line] of lines.entries()) {
       const match = parseCheckboxLine(line);
       if (!match) continue;
+      // Children of a skipped line wait as well; otherwise they would be
+      // created as top-level tasks instead of subtasks.
+      if (skippedIndent !== undefined && match.indent.length > skippedIndent) continue;
+      skippedIndent = undefined;
+      if (lineNumber === editingLine && !MARKER_RE.test(line)) { skippedIndent = match.indent.length; waiting = true; continue; }
       while (stack.length && stack[stack.length - 1].indent >= match.indent.length) stack.pop();
       const parent = stack[stack.length - 1];
       const taskId = await this.processLine(file, line, lineNumber, parent?.rootId);
       if (taskId) stack.push({ indent: match.indent.length, id: taskId, rootId: parent?.rootId ?? taskId });
     }
+    // Cursor movement fires no vault event, so poll until the line is free.
+    if (waiting) this.schedule(file, 3000);
   }
 
   private async processLine(file: TFile, line: string, lineNumber: number, parentId?: string, allowShortTitle = false): Promise<string | undefined> {
@@ -83,7 +103,7 @@ export class CheckboxWatcher {
       return marker;
     }
 
-    if (!parentId && !hasImportTag(match.parsed.tagNames, this.importTag)) return undefined;
+    if (!parentId && !importTagAccepts(match.parsed.tagNames, this.importTag)) return undefined;
     if (!allowShortTitle && match.parsed.title.trim().length < 3) return undefined;
 
     const task = await this.transport.createTask({
@@ -183,6 +203,11 @@ export function findTaskIdInLine(line: string): string | undefined { return line
 export function hasImportTag(tags: string[], importTag: string): boolean {
   const normalized = importTag.replace(/^#/, "").trim().toLocaleLowerCase();
   return tags.some((tag) => tag.toLocaleLowerCase() === normalized);
+}
+
+export function importTagAccepts(tags: string[], importTag: string): boolean {
+  const normalized = importTag.trim().replace(/^#/, "").trim();
+  return normalized === "" || hasImportTag(tags, normalized);
 }
 
 export function resolveRemoteDone(parentDone: boolean, directChildState: boolean | undefined): boolean | undefined {
