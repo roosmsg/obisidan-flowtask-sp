@@ -1,5 +1,6 @@
-import { Notice, TFile, type App, type EventRef, type Vault } from "obsidian";
+import { Notice, TFile, type App, type Editor, type EventRef, type MarkdownView, type Vault } from "obsidian";
 import { parseCheckboxLine } from "./domain/parser";
+import { locateLine } from "./domain/lines";
 import type { FlowTask } from "./types";
 import { TransportManager } from "./transport/manager";
 
@@ -39,8 +40,24 @@ export class CheckboxWatcher {
     this.timers.set(file.path, window.setTimeout(() => { void this.scanFile(file); }, 1500));
   }
 
+  // A note that is open in an editor is read and changed through that editor.
+  // The file on disk lags behind the editor while the user types, and a
+  // marker written to disk is merged back into the editor at the wrong spot.
+  private editorFor(file: TFile): Editor | undefined {
+    for (const leaf of this.app.workspace.getLeavesOfType("markdown")) {
+      const view = leaf.view as MarkdownView;
+      if (view.file?.path === file.path) return view.editor;
+    }
+    return undefined;
+  }
+
+  private async readNote(file: TFile): Promise<{ content: string; editor?: Editor }> {
+    const editor = this.editorFor(file);
+    return { content: editor ? editor.getValue() : await this.app.vault.read(file), editor };
+  }
+
   private async scanFile(file: TFile): Promise<void> {
-    const content = await this.app.vault.read(file);
+    const { content } = await this.readNote(file);
     const stack: Array<{ indent: number; id: string; rootId: string }> = [];
     for (const [lineNumber, line] of content.split("\n").entries()) {
       const match = parseCheckboxLine(line);
@@ -81,14 +98,37 @@ export class CheckboxWatcher {
     if (!task) return undefined;
 
     const markerText = ` %%sp-id:${task.id}%%`;
+    let placed = false;
+    // The note may have changed while the task was created, so the marker
+    // follows the original line instead of its old index.
+    const appendMarker = (lines: string[]): number | undefined => {
+      const target = locateLine(lines, lineNumber, line);
+      if (target === undefined || MARKER_RE.test(lines[target])) return undefined;
+      placed = true;
+      return target;
+    };
     this.processing.add(file.path);
     try {
-      await this.app.vault.process(file, (content) => {
-        const lines = content.split("\n");
-        if (lineNumber >= lines.length || lines[lineNumber].match(MARKER_RE)) return content;
-        lines[lineNumber] = `${lines[lineNumber]}${markerText}`;
-        return lines.join("\n");
-      });
+      const editor = this.editorFor(file);
+      if (editor) {
+        const lines = editor.getValue().split("\n");
+        const target = appendMarker(lines);
+        if (target !== undefined) editor.replaceRange(markerText, { line: target, ch: lines[target].length });
+      } else {
+        await this.app.vault.process(file, (content) => {
+          const lines = content.split("\n");
+          const target = appendMarker(lines);
+          if (target === undefined) return content;
+          lines[target] = `${lines[target]}${markerText}`;
+          return lines.join("\n");
+        });
+      }
+      if (!placed) {
+        // The line is gone; remove the task again instead of leaving an
+        // unlinked copy that the next scan would duplicate.
+        await this.transport.deleteTask(task.id);
+        return undefined;
+      }
       if (match.checked) await this.transport.updateTask(task.id, { status: "done" });
       new Notice(`FlowTask: ${match.checked ? "task completed" : "task synced"}.`);
     } finally {
@@ -101,7 +141,7 @@ export class CheckboxWatcher {
     const states = new Map(tasks.map((task) => [task.id, task.status === "done"]));
     // Required to find linked checkboxes in any note when completion changes in SP.
     for (const file of this.app.vault.getMarkdownFiles()) {
-      const original = await this.app.vault.read(file);
+      const { content: original, editor } = await this.readNote(file);
       const lines = original.split("\n");
       let changed = false;
       const hierarchy: Array<{ indent: number; done: boolean }> = [];
@@ -125,8 +165,14 @@ export class CheckboxWatcher {
       });
       if (changed) {
         this.processing.add(file.path);
-        try { await this.app.vault.process(file, () => lines.join("\n")); }
-        finally { this.processing.delete(file.path); }
+        try {
+          if (editor) {
+            const current = editor.getValue().split("\n");
+            lines.forEach((text, index) => { if (index < current.length && current[index] !== text) editor.setLine(index, text); });
+          } else {
+            await this.app.vault.process(file, () => lines.join("\n"));
+          }
+        } finally { this.processing.delete(file.path); }
       }
     }
   }
