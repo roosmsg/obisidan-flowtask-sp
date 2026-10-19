@@ -12,6 +12,7 @@ All notable changes to FlowTask For Super Productivity are documented here.
 - Shortened long heading tags to at most 30 characters: cut at a separator and then to whole words, keeping times such as `10:30` and ranges such as `Week 3-4` intact.
 - Added `flowtask: <project>` in frontmatter to choose the Super Productivity project for a note's checkboxes, and a setting to require it.
 - Made the "task synced" notice optional and off by default (setting **Notify on import**).
+- Deleted a task in Super Productivity once its linked checkbox is gone from every note, unless time was tracked on it.
 
 ## 0.1.8
 

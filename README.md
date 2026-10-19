@@ -206,6 +206,15 @@ The marker is hidden in Live Preview and Reading View and remains visible in Sou
 - Reopening the task in Super Productivity unchecks the linked note checkbox.
 - Remote completion synchronization runs during polling even when the FlowTask panel is closed.
 
+### Deleting tasks from notes
+
+Deleting a linked checkbox line (or the whole note) also deletes the task in Super Productivity:
+
+- The task is deleted once its `%%sp-id%%` marker has been missing from every note for two refresh cycles. Moving the line to another note therefore keeps the task; cutting it and pasting it a moment later does too.
+- Tasks with tracked time are never deleted. FlowTask shows a notice once so you can decide in Super Productivity.
+- Only tasks that FlowTask has seen linked in your notes since Obsidian started are considered. Removing the checkbox syntax but keeping the marker in the line does not count as a deletion.
+- Tasks that are already done or archived in Super Productivity are left alone.
+
 ### Subtasks from notes
 
 Indented checkboxes under an imported parent are created as Super Productivity subtasks:

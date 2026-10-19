@@ -3,6 +3,7 @@ import { parseCheckboxLine } from "./domain/parser";
 import { noteProjectName } from "./domain/frontmatter";
 import { fallbackHeadingTag, nearestHeadings, resolveHeadingTag } from "./domain/heading";
 import { locateLine } from "./domain/lines";
+import { createRemovalState, findRemovedMarkers } from "./domain/removal";
 import type { BridgeSettings, FlowTask } from "./types";
 import { TransportManager } from "./transport/manager";
 
@@ -15,6 +16,8 @@ export class CheckboxWatcher {
   private readonly timers = new Map<string, number>();
   private readonly processing = new Set<string>();
   private readonly syncedStates = new Map<string, boolean>();
+  private readonly reportedTimeTracked = new Set<string>();
+  private readonly removal = createRemovalState();
 
   private readonly reportedProjects = new Set<string>();
   private importTag = "sp";
@@ -208,6 +211,7 @@ export class CheckboxWatcher {
 
   async syncRemoteCompletions(tasks: FlowTask[]): Promise<void> {
     const states = new Map(tasks.map((task) => [task.id, task.status === "done"]));
+    const present = new Set<string>();
     // Required to find linked checkboxes in any note when completion changes in SP.
     for (const file of this.app.vault.getMarkdownFiles()) {
       const { content: original, editor } = await this.readNote(file);
@@ -216,6 +220,7 @@ export class CheckboxWatcher {
       const hierarchy: Array<{ indent: number; done: boolean }> = [];
       lines.forEach((line, index) => {
         const marker = line.match(MARKER_RE)?.[1];
+        if (marker) present.add(marker);
         const local = parseCheckboxLine(line);
         if (!local) return;
         while (hierarchy.length && hierarchy[hierarchy.length - 1].indent >= local.indent.length) hierarchy.pop();
@@ -243,6 +248,26 @@ export class CheckboxWatcher {
           }
         } finally { this.processing.delete(file.path); }
       }
+    }
+    await this.deleteRemoved(tasks, present);
+  }
+
+  // Deletes tasks whose marker has disappeared from every note. Tasks with
+  // tracked time are kept, since deleting them would also delete the time.
+  private async deleteRemoved(tasks: FlowTask[], present: Set<string>): Promise<void> {
+    const byId = new Map(tasks.map((task) => [task.id, task]));
+    for (const id of findRemovedMarkers(this.removal, present)) {
+      const task = byId.get(id);
+      if (!task) continue;
+      if (task.timeSpentMs > 0) {
+        if (!this.reportedTimeTracked.has(id)) {
+          this.reportedTimeTracked.add(id);
+          new Notice(`FlowTask: "${task.title}" was removed from your notes but has tracked time. Delete it in SP if you no longer need it.`);
+        }
+        continue;
+      }
+      await this.transport.deleteTask(id);
+      new Notice(`FlowTask: deleted "${task.title}" in SP because it was removed from your notes.`);
     }
   }
 }
