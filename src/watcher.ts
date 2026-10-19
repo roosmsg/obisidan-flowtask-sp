@@ -1,19 +1,29 @@
 import { Notice, TFile, type App, type EventRef, type Vault } from "obsidian";
 import { parseCheckboxLine } from "./domain/parser";
-import type { FlowTask } from "./types";
+import type { BridgeSettings, FlowTask } from "./types";
 import { TransportManager } from "./transport/manager";
 
 const MARKER_RE = /(?:<!--\s*sp-id:|%%\s*sp-id:)([\w-]+)(?:\s*-->|%%)/i;
 const LEGACY_MARKER_RE = /<!--\s*sp-id:([\w-]+)\s*-->/i;
+
+type WatcherOptions = Pick<BridgeSettings, "importTag" | "notifyOnImport">;
 
 export class CheckboxWatcher {
   private readonly timers = new Map<string, number>();
   private readonly processing = new Set<string>();
   private readonly syncedStates = new Map<string, boolean>();
 
-  constructor(private readonly app: App, private readonly transport: TransportManager, private importTag = "sp") {}
+  private importTag = "sp";
+  private notifyOnImport = false;
 
-  configure(importTag: string): void { this.importTag = importTag.replace(/^#/, "").trim() || "sp"; }
+  constructor(private readonly app: App, private readonly transport: TransportManager, options?: WatcherOptions) {
+    if (options) this.configure(options);
+  }
+
+  configure(options: WatcherOptions): void {
+    this.importTag = options.importTag.replace(/^#/, "").trim() || "sp";
+    this.notifyOnImport = options.notifyOnImport;
+  }
 
   register(vault: Vault, registerEvent: (event: EventRef) => void): void {
     registerEvent(vault.on("modify", (file) => {
@@ -90,7 +100,7 @@ export class CheckboxWatcher {
         return lines.join("\n");
       });
       if (match.checked) await this.transport.updateTask(task.id, { status: "done" });
-      new Notice(`FlowTask: ${match.checked ? "task completed" : "task synced"}.`);
+      if (this.notifyOnImport) new Notice(`FlowTask: ${match.checked ? "task completed" : "task synced"}.`);
     } finally {
       this.processing.delete(file.path);
     }

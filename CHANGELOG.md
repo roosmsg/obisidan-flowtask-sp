@@ -4,7 +4,7 @@ All notable changes to FlowTask For Super Productivity are documented here.
 
 ## Unreleased
 
-- Future changes.
+- Made the "task synced" notice optional and off by default (setting **Notify on import**).
 
 ## 0.1.8
 

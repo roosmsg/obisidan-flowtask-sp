@@ -384,6 +384,10 @@ Optional existing Super Productivity project name used when a newly created task
 
 The routing tag used by the checkbox watcher. Default: `#sp`.
 
+### Notify on import
+
+Shows a notice each time a checkbox is sent to Super Productivity. Default: off; the hidden `%%sp-id%%` marker already confirms the import in the note.
+
 ## Troubleshooting
 
 ### The panel says that Super Productivity is unavailable

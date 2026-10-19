@@ -28,6 +28,7 @@ export class FlowTaskSettingTab extends PluginSettingTab {
         items: [
           { name: "Default project", control: { type: "text", key: "defaultProjectName", defaultValue: "" } },
           { name: "Import tag", desc: "Only checkboxes with this tag are sent to SP. Default: #sp.", control: { type: "text", key: "importTag", defaultValue: "sp", placeholder: "#sp" } },
+          { name: "Notify on import", desc: "Show a notice each time a checkbox is sent to SP.", control: { type: "toggle", key: "notifyOnImport", defaultValue: false } },
         ],
       },
       {
