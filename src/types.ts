@@ -70,6 +70,7 @@ export interface BridgeSettings {
   tagWithHeading: boolean;
   requireNoteProject: boolean;
   notifyOnImport: boolean;
+  hideMarkers: boolean;
   useProjectStyles: boolean;
 }
 
@@ -86,6 +87,7 @@ export const DEFAULT_SETTINGS: BridgeSettings = {
   tagWithHeading: false,
   requireNoteProject: false,
   notifyOnImport: false,
+  hideMarkers: true,
   useProjectStyles: true,
 };
 

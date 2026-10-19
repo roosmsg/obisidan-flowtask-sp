@@ -197,7 +197,7 @@ After successful import, FlowTask appends an inline Obsidian comment:
 - [ ] Review the release #sp %%sp-id:task-id%%
 ```
 
-The marker is hidden in Live Preview and Reading View and remains visible in Source/Code mode. It makes synchronization idempotent and connects the note checkbox to the remote task. Legacy `<!--sp-id:...-->` markers are still recognized and migrated automatically during synchronization.
+The marker is not rendered in Reading View. In the editor it is hidden until you hover over the line or place the cursor on it, controlled by the **Hide task markers** setting. It makes synchronization idempotent and connects the note checkbox to the remote task. Legacy `<!--sp-id:...-->` markers are still recognized and migrated automatically during synchronization.
 
 ### Completion synchronization
 
@@ -454,6 +454,10 @@ Only import checkboxes from notes whose frontmatter names a project with `flowta
 ### Notify on import
 
 Shows a notice each time a checkbox is sent to Super Productivity. Default: off; the hidden `%%sp-id%%` marker already confirms the import in the note.
+
+### Hide task markers
+
+Hides the `%%sp-id%%` marker in Live Preview and Source mode until you hover over the line or place the cursor on it. Default: on.
 
 ## Troubleshooting
 
