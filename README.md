@@ -442,6 +442,10 @@ Adds the closest heading above a checkbox as a tag when the task is imported. Ex
 
 Only import checkboxes from notes whose frontmatter names a project with `flowtask: <project>`. Other notes are skipped instead of using the default project. Default: off.
 
+### Notify on import
+
+Shows a notice each time a checkbox is sent to Super Productivity. Default: off; the hidden `%%sp-id%%` marker already confirms the import in the note.
+
 ## Troubleshooting
 
 ### The panel says that Super Productivity is unavailable

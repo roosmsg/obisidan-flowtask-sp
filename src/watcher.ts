@@ -9,7 +9,7 @@ import { TransportManager } from "./transport/manager";
 const MARKER_RE = /(?:<!--\s*sp-id:|%%\s*sp-id:)([\w-]+)(?:\s*-->|%%)/i;
 const LEGACY_MARKER_RE = /<!--\s*sp-id:([\w-]+)\s*-->/i;
 
-type WatcherOptions = Pick<BridgeSettings, "importTag" | "requireNoteProject" | "tagWithHeading">;
+type WatcherOptions = Pick<BridgeSettings, "importTag" | "notifyOnImport" | "requireNoteProject" | "tagWithHeading">;
 
 export class CheckboxWatcher {
   private readonly timers = new Map<string, number>();
@@ -20,6 +20,7 @@ export class CheckboxWatcher {
   private importTag = "sp";
   private tagWithHeading = false;
   private requireNoteProject = false;
+  private notifyOnImport = false;
 
   constructor(private readonly app: App, private readonly transport: TransportManager, options?: WatcherOptions) {
     if (options) this.configure(options);
@@ -30,6 +31,7 @@ export class CheckboxWatcher {
     this.importTag = options.importTag.replace(/^#/, "").trim();
     this.tagWithHeading = options.tagWithHeading;
     this.requireNoteProject = options.requireNoteProject;
+    this.notifyOnImport = options.notifyOnImport;
   }
 
   register(vault: Vault, registerEvent: (event: EventRef) => void): void {
@@ -181,7 +183,7 @@ export class CheckboxWatcher {
         return undefined;
       }
       if (match.checked) await this.transport.updateTask(task.id, { status: "done" });
-      new Notice(`FlowTask: ${match.checked ? "task completed" : "task synced"}.`);
+      if (this.notifyOnImport) new Notice(`FlowTask: ${match.checked ? "task completed" : "task synced"}.`);
     } finally {
       this.processing.delete(file.path);
     }

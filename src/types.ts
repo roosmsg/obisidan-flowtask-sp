@@ -69,6 +69,7 @@ export interface BridgeSettings {
   importTag: string;
   tagWithHeading: boolean;
   requireNoteProject: boolean;
+  notifyOnImport: boolean;
   useProjectStyles: boolean;
 }
 
@@ -84,6 +85,7 @@ export const DEFAULT_SETTINGS: BridgeSettings = {
   importTag: "sp",
   tagWithHeading: false,
   requireNoteProject: false,
+  notifyOnImport: false,
   useProjectStyles: true,
 };
 
