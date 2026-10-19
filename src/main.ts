@@ -6,6 +6,7 @@ import { QuickCaptureModal } from "./ui/quick-capture";
 import { FLOWTASK_VIEW_TYPE, TaskView } from "./ui/task-view";
 import { FlowTaskSettingTab } from "./settings";
 import { COMMAND_NAMES } from "./commands";
+import { markerDecorations } from "./editor/marker-decoration";
 
 export default class FlowTaskPlugin extends Plugin {
   override settings!: BridgeSettings;
@@ -28,6 +29,8 @@ export default class FlowTaskPlugin extends Plugin {
       () => this.settings.useProjectStyles,
     ));
     this.addSettingTab(new FlowTaskSettingTab(this.app, this));
+    this.registerEditorExtension(markerDecorations);
+    this.applyMarkerVisibility();
     this.addRibbonIcon("check-check", "Open FlowTask", () => void this.openPanel());
     this.registerCommands();
     this.restartPolling();
@@ -35,9 +38,12 @@ export default class FlowTaskPlugin extends Plugin {
     this.registerDomEvent(window, "focus", () => { void this.refreshPanel(); });
   }
 
-  override onunload(): void {}
+  override onunload(): void { document.body.removeClass("flowtask-hide-markers"); }
 
-  async saveSettings(): Promise<void> { await this.saveData(this.settings); this.transport.configure(); this.watcher?.configure(this.settings.importTag); void this.refreshPanel(); }
+  async saveSettings(): Promise<void> { await this.saveData(this.settings); this.transport.configure(); this.watcher?.configure(this.settings.importTag); this.applyMarkerVisibility(); void this.refreshPanel(); }
+
+  // The stylesheet hides decorated markers while this class is present.
+  private applyMarkerVisibility(): void { document.body.toggleClass("flowtask-hide-markers", this.settings.hideMarkers); }
 
   restartPolling(): void {
     if (this.pollingId) window.clearInterval(this.pollingId);

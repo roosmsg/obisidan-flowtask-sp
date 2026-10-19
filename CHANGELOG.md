@@ -4,7 +4,7 @@ All notable changes to FlowTask For Super Productivity are documented here.
 
 ## Unreleased
 
-- Future changes.
+- Added the setting **Hide task markers** (on by default): the `%%sp-id%%` marker stays hidden in the editor until the line is hovered or edited.
 
 ## 0.1.8
 

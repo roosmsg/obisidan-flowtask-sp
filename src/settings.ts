@@ -43,6 +43,7 @@ export class FlowTaskSettingTab extends PluginSettingTab {
         heading: "Appearance",
         items: [
           { name: "Use Super Productivity colors and icons", desc: "Apply project and tag colors and icons from Super Productivity.", control: { type: "toggle", key: "useProjectStyles", defaultValue: true } },
+          { name: "Hide task markers", desc: "Hide the %%sp-id%% marker in the editor until you hover over the line or place the cursor on it.", control: { type: "toggle", key: "hideMarkers", defaultValue: true } },
         ],
       },
     ];

@@ -78,3 +78,11 @@
 .flowtask-subtask-autocomplete { top: auto; bottom: calc(100% + 5px); left: 0; width: min(300px, 100%); }
 .flowtask-quick-subtask-row input { flex: 1; min-width: 0; padding: 7px 8px; border: 1px solid var(--background-modifier-border); border-radius: 5px; background: var(--background-primary); color: var(--text-normal); }
 .flowtask-quick-subtask-row button { border: 0; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 18px; }
+
+/* Task identity markers (%%sp-id%%) stay out of sight until the line is
+   hovered or edited. Font size instead of display so the editor can still
+   measure the text. */
+body.flowtask-hide-markers .cm-line:not(.cm-active):not(:hover) .flowtask-marker {
+  font-size: 0;
+  opacity: 0;
+}
