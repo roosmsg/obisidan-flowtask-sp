@@ -131,6 +131,27 @@ Leave the import tag empty to import every checkbox without a tag:
 
 With an empty import tag, every checkbox in a note is sent to Super Productivity as soon as the note is opened or edited, except the line that holds the cursor. Titles shorter than three characters are skipped.
 
+### Tag tasks with the nearest heading
+
+Enable **Settings > FlowTask For Super Productivity > Tag tasks with nearest heading** to use the section a checkbox belongs to as a tag:
+
+```markdown
+## Garden
+
+- [ ] Prune the roses #sp
+- [ ] Order compost #sp
+```
+
+Both tasks receive the Super Productivity tag `Garden`. The rules are:
+
+- The closest heading above the checkbox is used, at any level. Formatting, wikilinks and HTML are stripped.
+- The heading is matched against existing Super Productivity tags, case-insensitively. When the full heading does not match, a shortened form is tried: the part before the first `: `, ` - `, ` – `, `|` or `(`, cut to whole words within 30 characters. `## Garden: spring` matches the tag `Garden`; `## Week 3-4 – Reading (part 1)` gives `Week 3-4`; `10:30` and `Week 3-4` stay intact.
+- When no tag matches, the heading is appended to the task title as `#Garden`, the same way an unknown inline tag is handled. Current Super Productivity versions parse the hashtag a moment after the task arrives, create the tag and attach it. Spaces become hyphens: `## Release notes` gives `#Release-notes`.
+- Checkboxes above the first heading receive no heading tag.
+- Inline `#tags` on the line are kept and combined with the heading tag.
+- The tag is set when the task is imported. Moving the checkbox to another section later does not change it.
+- Subtasks inherit from their parent and receive no heading tag of their own.
+
 ### Supported note metadata
 
 ```markdown
@@ -393,6 +414,10 @@ Optional existing Super Productivity project name used when a newly created task
 ### Import tag
 
 The routing tag used by the checkbox watcher. Default: `#sp`. Leave it empty to import every checkbox.
+
+### Tag tasks with nearest heading
+
+Adds the closest heading above a checkbox as a tag when the task is imported. Existing Super Productivity tags are matched; otherwise the heading is appended to the title as `#tag`. Default: off.
 
 ## Troubleshooting
 
