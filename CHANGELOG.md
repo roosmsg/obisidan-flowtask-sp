@@ -4,7 +4,7 @@ All notable changes to FlowTask For Super Productivity are documented here.
 
 ## Unreleased
 
-- Future changes.
+- Deleted a task in Super Productivity once its linked checkbox is gone from every note, unless time was tracked on it.
 
 ## 0.1.8
 
