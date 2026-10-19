@@ -1,20 +1,32 @@
 import { Notice, TFile, type App, type EventRef, type Vault } from "obsidian";
 import { parseCheckboxLine } from "./domain/parser";
-import type { FlowTask } from "./types";
+import { noteProjectName } from "./domain/frontmatter";
+import type { BridgeSettings, FlowTask } from "./types";
 import { TransportManager } from "./transport/manager";
 
 const MARKER_RE = /(?:<!--\s*sp-id:|%%\s*sp-id:)([\w-]+)(?:\s*-->|%%)/i;
 const LEGACY_MARKER_RE = /<!--\s*sp-id:([\w-]+)\s*-->/i;
+
+type WatcherOptions = Pick<BridgeSettings, "importTag" | "requireNoteProject">;
 
 export class CheckboxWatcher {
   private readonly timers = new Map<string, number>();
   private readonly processing = new Set<string>();
   private readonly syncedStates = new Map<string, boolean>();
 
-  constructor(private readonly app: App, private readonly transport: TransportManager, private importTag = "sp") {}
+  private readonly reportedProjects = new Set<string>();
+  private importTag = "sp";
+  private requireNoteProject = false;
+
+  constructor(private readonly app: App, private readonly transport: TransportManager, options?: WatcherOptions) {
+    if (options) this.configure(options);
+  }
 
   // An empty import tag means that every checkbox is imported.
-  configure(importTag: string): void { this.importTag = importTag.replace(/^#/, "").trim(); }
+  configure(options: WatcherOptions): void {
+    this.importTag = options.importTag.replace(/^#/, "").trim();
+    this.requireNoteProject = options.requireNoteProject;
+  }
 
   register(vault: Vault, registerEvent: (event: EventRef) => void): void {
     registerEvent(vault.on("modify", (file) => {
@@ -88,11 +100,15 @@ export class CheckboxWatcher {
 
     if (!parentId && !importTagAccepts(match.parsed.tagNames, this.importTag)) return undefined;
     if (!allowShortTitle && match.parsed.title.trim().length < 3) return undefined;
+    // Subtasks inherit their parent's project, so the note project only
+    // matters for top-level tasks. It is fixed at import time.
+    const noteProject = parentId ? undefined : await this.noteProject(file);
+    if (this.requireNoteProject && !parentId && !noteProject) return undefined;
 
     const task = await this.transport.createTask({
       title: match.parsed.title,
       parentId,
-      projectName: match.parsed.projectName,
+      projectName: match.parsed.projectName ?? noteProject,
       tagNames: match.parsed.tagNames.filter((tag) => tag.toLocaleLowerCase() !== this.importTag.toLocaleLowerCase()),
       dueDate: match.parsed.dueDate,
       estimateMinutes: match.parsed.estimateMinutes,
@@ -115,6 +131,22 @@ export class CheckboxWatcher {
       this.processing.delete(file.path);
     }
     return task.id;
+  }
+
+  // The project named in the note's frontmatter, matched case-sensitively
+  // against existing Super Productivity projects. An unknown name is reported
+  // once per note and otherwise ignored.
+  private async noteProject(file: TFile): Promise<string | undefined> {
+    const name = noteProjectName(this.app.metadataCache.getFileCache(file)?.frontmatter);
+    if (!name) return undefined;
+    const project = (await this.transport.listProjects()).find((item) => item.name === name);
+    if (project) return project.name;
+    const key = `${file.path}:${name}`;
+    if (!this.reportedProjects.has(key)) {
+      this.reportedProjects.add(key);
+      new Notice(`FlowTask: project "${name}" from ${file.path} does not exist in Super Productivity.`);
+    }
+    return undefined;
   }
 
   async syncRemoteCompletions(tasks: FlowTask[]): Promise<void> {

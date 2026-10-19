@@ -6,6 +6,7 @@ All notable changes to FlowTask For Super Productivity are documented here.
 
 - Added import of every checkbox when the import tag setting is empty.
 - Delayed import of the line under the cursor until the cursor leaves it, so half-typed titles are no longer sent.
+- Added `flowtask: <project>` in frontmatter to choose the Super Productivity project for a note's checkboxes, and a setting to require it.
 
 ## 0.1.8
 
