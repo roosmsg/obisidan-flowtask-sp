@@ -131,6 +131,25 @@ Leave the import tag empty to import every checkbox without a tag:
 
 With an empty import tag, every checkbox in a note is sent to Super Productivity as soon as the note is opened or edited, except the line that holds the cursor. Titles shorter than three characters are skipped.
 
+### Choose the project per note
+
+The frontmatter property `flowtask` names the Super Productivity project for all checkboxes in a note, for example to keep templates and archived notes out of your default project:
+
+```markdown
+---
+flowtask: Thesis
+---
+
+- [ ] Write chapter 2
+```
+
+- The name must match an existing Super Productivity project exactly, including case. An unknown name is reported once per note and otherwise ignored.
+- An inline `+Project` on the task line wins over the note project. Notes without a project use the **Default project** setting, or the Inbox when that is empty.
+- The project is set when the task is imported. Changing the frontmatter later does not move existing tasks.
+- Subtasks inherit their parent's project.
+
+Enable **Require a note project** in the settings to skip notes that do not name a project instead of sending their checkboxes to the default project.
+
 ### Tag tasks with the nearest heading
 
 Enable **Settings > FlowTask For Super Productivity > Tag tasks with nearest heading** to use the section a checkbox belongs to as a tag:
@@ -419,6 +438,10 @@ The routing tag used by the checkbox watcher. Default: `#sp`. Leave it empty to 
 
 Adds the closest heading above a checkbox as a tag when the task is imported. Existing Super Productivity tags are matched; otherwise the heading is appended to the title as `#tag`. Default: off.
 
+### Require a note project
+
+Only import checkboxes from notes whose frontmatter names a project with `flowtask: <project>`. Other notes are skipped instead of using the default project. Default: off.
+
 ## Troubleshooting
 
 ### The panel says that Super Productivity is unavailable
@@ -433,8 +456,9 @@ Adds the closest heading above a checkbox as a tag when the task is imported. Ex
 
 1. Confirm that the checkbox contains the configured import tag, normally `#sp`, or that the import tag is empty.
 2. Confirm that the line starts with an Obsidian checkbox such as `- [ ]`.
-3. Use **FlowTask: Sync current line** to process the current line immediately.
-4. Check the note source for the hidden `%%sp-id:...%%` marker.
+3. With **Require a note project** enabled, confirm that the note's frontmatter names an existing project.
+4. Use **FlowTask: Sync current line** to process the current line immediately.
+5. Check the note source for the hidden `%%sp-id:...%%` marker.
 
 ### The task has no date in Super Productivity
 

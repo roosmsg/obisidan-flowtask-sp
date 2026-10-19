@@ -10,6 +10,7 @@ All notable changes to FlowTask For Super Productivity are documented here.
 - Read and update open notes through the editor instead of the file on disk, so a title is no longer imported from a stale save and markers are no longer merged into the wrong line.
 - Added an optional setting that tags imported tasks with the nearest heading above the checkbox. Headings without a matching tag are appended to the title as `#tag`.
 - Shortened long heading tags to at most 30 characters: cut at a separator and then to whole words, keeping times such as `10:30` and ranges such as `Week 3-4` intact.
+- Added `flowtask: <project>` in frontmatter to choose the Super Productivity project for a note's checkboxes, and a setting to require it.
 
 ## 0.1.8
 

@@ -68,6 +68,7 @@ export interface BridgeSettings {
   projectOrder: string[];
   importTag: string;
   tagWithHeading: boolean;
+  requireNoteProject: boolean;
   useProjectStyles: boolean;
 }
 
@@ -82,6 +83,7 @@ export const DEFAULT_SETTINGS: BridgeSettings = {
   projectOrder: [],
   importTag: "sp",
   tagWithHeading: false,
+  requireNoteProject: false,
   useProjectStyles: true,
 };
 

@@ -28,6 +28,7 @@ export class FlowTaskSettingTab extends PluginSettingTab {
         items: [
           { name: "Default project", control: { type: "text", key: "defaultProjectName", defaultValue: "" } },
           { name: "Import tag", desc: "Only checkboxes with this tag are sent to SP. Leave empty to import every checkbox. Default: #sp.", control: { type: "text", key: "importTag", defaultValue: "sp", placeholder: "#sp" } },
+          { name: "Require a note project", desc: "Only import checkboxes from notes whose frontmatter names a project with flowtask: <project>. Other notes are skipped instead of using the default project.", control: { type: "toggle", key: "requireNoteProject", defaultValue: false } },
           { name: "Tag tasks with nearest heading", desc: "Add the closest heading above a checkbox as a tag when the task is imported. Unknown headings are appended to the title as #tag.", control: { type: "toggle", key: "tagWithHeading", defaultValue: false } },
         ],
       },
